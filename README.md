@@ -31,7 +31,7 @@ Allows to connect erlang nodes, via Erlang distribution and without epmd, using 
 
 ### Example usage ###
 ```
-(app2@host.local)1> epmdless_client:add_node('sample1@oleg.local', 17012).
+(app2@host.local)1> epmdless_client:add_node('app1@host.local', 17012).
 ok
 (app2@host.local)2> epmdless_client:list_nodes().
 [{'app1@host.local',{"host.local",17012}}]
