@@ -2,6 +2,9 @@
 
 Allows to connect erlang nodes, via Erlang distribution and without epmd, using tcp or tls.
 
+## Requirements ##
+ Erlang >= 19.1
+
 ## Configuration ##
 
 ### Using TCP as transport protocol ###
