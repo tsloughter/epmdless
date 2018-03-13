@@ -28,6 +28,13 @@ Allows to connect erlang nodes, via Erlang distribution and without epmd, using 
 ]}
 ```
 
+### VM args ###
+Erlang VM needs few extra flags on start to disable epmd daemon startup and override empd client callback module.
+
+Minimal set of options:
+`erl -proto_dist epmdless_proto -start_epmd false -epmd_module epmdless_client`
+
+Note: since epmd is disabled you need to populate epmd-client database manually. Check epmd_dist module API.
 
 ### Example usage ###
 ```
@@ -36,3 +43,10 @@ ok
 (app2@host.local)2> epmdless_client:list_nodes().
 [{'app1@host.local',{"host.local",17012}}]
 ````
+
+### Example project ###
+
+Please also refer: https://github.com/oltarasenko/erlang_distribution_in_docker
+for an example of complete project running epmdless.
+
+
