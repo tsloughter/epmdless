@@ -34,6 +34,12 @@
 -define(PPRE, 4).
 -define(PPOST, 4).
 
+%% this macro only exists in OTP-21 and above, where ssl_accept/2 is deprecated
+-ifdef(OTP_RELEASE).
+-define(ssl_accept(TCPSocket, TLSOpts), ssl:handshake(TCPSocket, TLSOpts)).
+-else.
+-define(ssl_accept(TCPSocket, TLSOpts), ssl:ssl_accept(TCPSocket, TLSOpts)).
+-endif.
 
 %%====================================================================
 %% Internal application API
@@ -213,7 +219,7 @@ accept_loop(Proxy, world = Type, Listen, Extra) ->
 	{ok, Socket} ->
 	    Opts = get_ssl_options(server),
 	    wait_for_code_server(),
-	    case ssl:ssl_accept(Socket, Opts) of
+	    case ?ssl_accept(Socket, Opts) of
 		{ok, SslSocket} ->
 		    PairHandler = spawn_link(fun() -> setup_connection(SslSocket, Extra) end),
 		    ok = ssl:controlling_process(SslSocket, PairHandler),
