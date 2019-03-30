@@ -1,0 +1,79 @@
+#!/usr/bin/env escript
+%%! -hidden -noshell -noinput -start_epmd false -proto_dist epmdless_proto -epmd_module epmdless_client
+
+-mode(compile).
+
+main([RawRemoteNode, Cookie, DistPort]) ->
+    % Loading EPMDLess
+    % I did not find a better way for finding epmdless ebin
+    code:add_paths(filelib:wildcard("../lib/*/ebin", "./")),
+    ok = application:load(epmdless),
+
+    % Use random distribution port for connecting node
+    os:putenv("EPMDLESS_DIST_PORT", "0"),
+
+    LocalNode = local_node(),
+    RemoteNode = list_to_atom(RawRemoteNode),
+
+    case net_kernel:start([LocalNode, longnames]) of
+        {ok, _} -> erlang:set_cookie(LocalNode, list_to_atom(Cookie));
+        {error, {already_started, _}} -> ok;
+        {error, Reason} -> erlang:error({no_network, Reason})
+    end,
+
+    % Add remote node to EPMD
+    % This works for non tls connections. For encrypted clusters it's required
+    % to provide several additional parameters (e.g. `transport`)
+    epmdless_client:add_node(RemoteNode, "127.0.0.1", list_to_integer(DistPort)),
+
+    case net_kernel:connect_node(RemoteNode) of
+        true -> ok;
+        _ -> erlang:error({no_connection, RemoteNode})
+    end,
+
+    % Control the shell on remote node
+    Shell = user_drv:start(['tty_sl -c -e', {RemoteNode, shell, start, []}]),
+    spawn_link(fun() -> monitor_group(RemoteNode, Shell) end),
+    erlang:monitor(process, Shell),
+    receive
+        {'DOWN', _Ref, process, Shell, _Reason} ->
+            ok
+    end,
+
+    halt(0);
+
+main(_) ->
+    io:format("usage: ~s <remote_node> <cookie> <distribution_port>~n", [escript:script_name()]).
+
+local_node() ->
+    LocalNode = list_to_atom("escript_" ++ os:getpid() ++ "@127.0.0.1"),
+    error_logger:info_msg("Started local node: ~p~n", [LocalNode]),
+    LocalNode.
+
+
+monitor_group(RemoteNode, Shell) ->
+    timer:sleep(250),
+    case get_group_leader(Shell) of
+        Pid when is_pid(Pid) ->
+            set_expand_fun(RemoteNode, Pid),
+            erlang:monitor(process, Pid),
+            receive
+                {'DOWN', _Ref, process, Pid, _Reason} ->
+                    ok
+            end;
+        undefined ->
+            ok
+    end,
+    monitor_group(RemoteNode, Shell).
+
+
+get_group_leader(Pid) ->
+    {dictionary, Dict} = process_info(Pid, dictionary),
+    proplists:get_value(current_group, Dict).
+
+
+set_expand_fun(RemoteNode, GL) ->
+    ExpFun = fun(B) ->
+        rpc:call(RemoteNode, edlin_expand, expand, [B])
+    end,
+    ok = io:setopts(GL, [{expand_fun, ExpFun}]).
