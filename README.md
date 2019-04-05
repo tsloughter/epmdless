@@ -42,11 +42,20 @@ Note: since epmd is disabled you need to populate epmd-client database manually.
 ok
 (app2@host.local)2> epmdless_client:list_nodes().
 [{'app1@host.local',{"host.local",17012}}]
-````
+```
+
+### Connecting to epmdless nodes ###
+It's possible to connect to epmdless nodes using remsh. The distribution port can be provided via EPMDLESS_REMSH_PORT environmental variable.
+
+Example usage:
+```
+EPMDLESS_REMSH_PORT=17012 erl -name local_node@127.0.0.1 -remsh epmdless_node@127.0.0.1 -setcookie <cookie> -proto_dist epmdless_proto -epmd_module epmdless_client -pa _build/default/lib/epmdless/ebin
+```
 
 ### Example project ###
 
 Please also refer: https://github.com/oltarasenko/erlang_distribution_in_docker
 for an example of complete project running epmdless.
+
 
 
