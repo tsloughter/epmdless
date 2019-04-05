@@ -1,5 +1,5 @@
 {application, epmdless,
- [{description, "An OTP application"},
+ [{description, "EPMDLess application (allows connecting erlang nodes without EPMD)"},
   {vsn, "0.1.1"},
   {registered, []},
   {mod, { epmdless_app, []}},
@@ -10,7 +10,6 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
   {licenses, ["Apache 2.0"]},
-  {links, []}
+  {links, [{"GitHub", "https://github.com/oltarasenko/epmdless"}]}
  ]}.
