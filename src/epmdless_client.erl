@@ -63,8 +63,13 @@ port_please(Name, Host) ->
             error_logger:info_msg("Resolved port for ~p/~p to ~p~n", [Name, Host, Port]),
             {port, Port, 5};
         {error, noport} ->
-            error_logger:info_msg("No port for ~p/~p~n", [Name, Host]),
-            noport
+            case os:getenv("EPMDLESS_REMSH_PORT") of
+                false ->
+                    error_logger:info_msg("No port for ~p/~p~n", [Name, Host]),
+                    noport;
+                RemotePort ->
+                    {port, list_to_integer(RemotePort), 5}
+            end
     end.
 
 
