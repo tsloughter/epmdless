@@ -26,6 +26,8 @@
 
 -include_lib("kernel/include/net_address.hrl").
 
+-include("epmdless.hrl").
+
 -record(state, 
 	{listen,
 	 accept_loop
@@ -226,7 +228,7 @@ accept_loop(Proxy, world = Type, Listen, Extra) ->
 		    flush_old_controller(PairHandler, SslSocket);
 		{error, {options, _}} = Error ->
 		    %% Bad options: that's probably our fault.  Let's log that.
-		    error_logger:error_msg("Cannot accept TLS distribution connection: ~s~n",
+		    ?LOG_ERROR("Cannot accept TLS distribution connection: ~s~n",
 					   [ssl:format_error(Error)]),
 		    gen_tcp:close(Socket);
 		_ ->
@@ -292,7 +294,7 @@ setup_proxy(Driver, Ip, Port, Parent) ->
 	    end;
 	{error, {options, _}} = Err ->
 	    %% Bad options: that's probably our fault.  Let's log that.
-	    error_logger:error_msg("Cannot open TLS distribution connection: ~s~n",
+	    ?LOG_ERROR("Cannot open TLS distribution connection: ~s~n",
 				   [ssl:format_error(Err)]),
 	    Parent ! {self(), Err};
 	Err ->
@@ -318,7 +320,7 @@ setup_connection(World, ErtsListen) ->
             ssl:setopts(World, [{active,true}, {packet,?PPRE}, nodelay()]),
             loop_conn_setup(World, Erts);
         Error ->
-            error_logger:error_msg("Failed to setup connection to erts with ~p", [Error]),
+            ?LOG_ERROR("Failed to setup connection to erts with ~p", [Error]),
             ssl:close(World)
     end.
 

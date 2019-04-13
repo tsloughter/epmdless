@@ -32,6 +32,8 @@
 -include_lib("kernel/include/dist.hrl").
 -include_lib("kernel/include/dist_util.hrl").
 
+-include("epmdless.hrl").
+
 childspecs() ->
     {ok, [{
        epmdless_tls_dist_proxy, {epmdless_tls_dist_proxy, start_link, []},
@@ -101,13 +103,11 @@ do_setup(Driver, Kernel, Node, Type, MyNode, LongOrShortNames, SetupTime) ->
                     dist_util:reset_timer(Timer),
                     case epmdless_tls_dist_proxy:connect(Driver, Ip, TcpPort) of
                         {ok, Socket} ->
-                            error_logger:info_msg("Connected to ~p~n", [{Ip, TcpPort}]),
                             HSData = connect_hs_data(Kernel, Node, MyNode, Socket, 
                                                      Timer, Version, Ip, TcpPort, RawAddress,
                                                      Type),
                             dist_util:handshake_we_started(HSData);
                         Other ->
-                            error_logger:error_msg("Failed to connect to ~p with ~p~n", [{Ip, TcpPort}, Other]),
                             %% Other Node may have closed since 
                             %% port_please !
                             ?trace("other node (~p) "
@@ -147,11 +147,11 @@ splitnode(Driver, Node, LongOrShortNames) ->
 	    Host = lists:append(Tail),
 	    check_node(Driver, Name, Node, Host, LongOrShortNames);
 	[_] ->
-	    error_logger:error_msg("** Nodename ~p illegal, no '@' character **~n",
-		      [Node]),
+	    ?LOG_ERROR("** Nodename ~p illegal, no '@' character **~n",
+                   [Node]),
 	    ?shutdown(Node);
 	_ ->
-	    error_logger:error_msg("** Nodename ~p illegal **~n", [Node]),
+	    ?LOG_ERROR("** Nodename ~p illegal **~n", [Node]),
 	    ?shutdown(Node)
     end.
 
@@ -162,7 +162,7 @@ check_node(Driver, Name, Node, Host, LongOrShortNames) ->
 		{ok, _} ->
 		    [Name, Host];
 		_ ->
-		    error_logger:error_msg("** System running to use "
+		    ?LOG_ERROR("** System running to use "
 					   "fully qualified "
 					   "hostnames **~n"
 					   "** Hostname ~s is illegal **~n",
@@ -170,9 +170,9 @@ check_node(Driver, Name, Node, Host, LongOrShortNames) ->
 		    ?shutdown(Node)
 	    end;
 	[_, _ | _] when LongOrShortNames == shortnames ->
-	    error_logger:error_msg("** System NOT running to use fully qualified "
-			      "hostnames **~n"
-		      "** Hostname ~s is illegal **~n",
+	    ?LOG_ERROR("** System NOT running to use fully qualified "
+                   "hostnames **~n"
+                   "** Hostname ~s is illegal **~n",
 		      [Host]),
 	    ?shutdown(Node);
 	_ ->

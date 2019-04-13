@@ -35,12 +35,10 @@
 
 -export([accept_loop/3,do_accept/7,do_setup/7,getstat/1,tick/2]).
 
--import(error_logger,[error_msg/2]).
-
 -include_lib("kernel/include/net_address.hrl").
-
 -include_lib("kernel/include/dist.hrl").
 -include_lib("kernel/include/dist_util.hrl").
+-include_lib("kernel/include/logger.hrl").
 
 %% ------------------------------------------------------------
 %%  Select this protocol based on node name
@@ -281,7 +279,6 @@ do_setup(Driver, Kernel, Node, Type, MyNode, LongOrShortNames, SetupTime) ->
                     dist_util:reset_timer(Timer),
                     case Driver:connect(Ip, TcpPort, connect_options([{active, false}, {packet, 2}, {reuseaddr, true}, {buffer, 65536}])) of
                         {ok, Socket} ->
-                            error_logger:info_msg("Connected to ~p~n", [{Ip, TcpPort}]),
                             HSData = #hs_data{
                                 kernel_pid = Kernel,
                                 other_node = Node,
@@ -310,7 +307,6 @@ do_setup(Driver, Kernel, Node, Type, MyNode, LongOrShortNames, SetupTime) ->
                             },
                             dist_util:handshake_we_started(HSData);
                         _ ->
-                            error_logger:info_msg("Failed to connect to ~p~n", [{Ip, TcpPort}]),
                             %% Other Node may have closed since
                             %% port_please !
                             ?trace("other node (~p) closed since port_please.~n", [Node]),
@@ -351,28 +347,28 @@ splitnode(Driver, Node, LongOrShortNames) ->
                         {ok, _} ->
                             [Name, Host];
                         _ ->
-                            error_msg("** System running to use "
-                                      "fully qualified "
-                                      "hostnames **~n"
-                                      "** Hostname ~ts is illegal **~n",
-                                      [Host]),
+                            ?LOG_ERROR("** System running to use "
+                                       "fully qualified "
+                                       "hostnames **~n"
+                                       "** Hostname ~ts is illegal **~n",
+                                       [Host]),
                             ?shutdown(Node)
                     end;
 		L when length(L) > 1, LongOrShortNames =:= shortnames ->
-		    error_msg("** System NOT running to use fully qualified "
-			      "hostnames **~n"
-			      "** Hostname ~ts is illegal **~n",
+                ?LOG_ERROR("** System NOT running to use fully qualified "
+                           "hostnames **~n"
+                           "** Hostname ~ts is illegal **~n",
 			      [Host]),
 		    ?shutdown(Node);
 		_ ->
 		    [Name, Host]
 	    end;
 	[_] ->
-	    error_msg("** Nodename ~p illegal, no '@' character **~n",
-		      [Node]),
+	    ?LOG_ERROR("** Nodename ~p illegal, no '@' character **~n",
+                   [Node]),
 	    ?shutdown(Node);
 	_ ->
-	    error_msg("** Nodename ~p illegal **~n", [Node]),
+	    ?LOG_ERROR("** Nodename ~p illegal **~n", [Node]),
 	    ?shutdown(Node)
     end.
 
