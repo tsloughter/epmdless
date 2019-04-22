@@ -41,10 +41,8 @@ register_node(_Name, Port, _Family) ->
 host_please(Node) ->
     case gen_server:call(?MODULE, {host_please, Node}, infinity) of
         {error, nohost} ->
-            error_logger:info_msg("No host found for node ~p~n", [Node]),
             nohost;
         {ok, Host} ->
-            error_logger:info_msg("Found host ~p for node ~p~n", [Host, Node]),
             {host, Host}
     end.
 
@@ -60,12 +58,10 @@ host_please(Node) ->
 port_please(Name, Host) ->
     case gen_server:call(?MODULE, {port_please, Name, Host}, infinity) of
         {ok, Port} ->
-            error_logger:info_msg("Resolved port for ~p/~p to ~p~n", [Name, Host, Port]),
             {port, Port, 5};
         {error, noport} ->
             case os:getenv("EPMDLESS_REMSH_PORT") of
                 false ->
-                    error_logger:info_msg("No port for ~p/~p~n", [Name, Host]),
                     noport;
                 RemotePort ->
                     {port, list_to_integer(RemotePort), 5}
@@ -89,7 +85,6 @@ add_node(Node, Port) ->
       Host :: inet:hostname() | inet:ip_address(),
       Port :: inet:port_number().
 add_node(Node, Host, Port) ->
-    error_logger:error_msg("Adding a node: ~p~n", [Node]),
     ok = gen_server:call(?MODULE, {add_node, Node, Host, Port}, infinity).
 
 
@@ -124,13 +119,11 @@ init([]) ->
     {ok, #state{}}.
 
 
-handle_info(Msg, State) ->
-    error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
+handle_info(_Msg, State) ->
     {noreply, State}.
 
 
-handle_cast(Msg, State) ->
-    error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
+handle_cast(_Msg, State) ->
     {noreply, State}.
 
 
@@ -158,15 +151,13 @@ handle_call({port_please, Node, Host}, _From, State) ->
     {reply, Reply, State};
 
 handle_call({port, DistPort}, _From, State) ->
-    error_logger:info_msg("Starting erlang distribution at port ~p~n", [DistPort]),
     {reply, ok, State#state{dist_port = DistPort}};
 
 handle_call(get_info, _From, State = #state{dist_port = DistPort}) ->
     {reply, [{dist_port, DistPort}], State};
 
-handle_call(Msg, _From, State) ->
-    error_logger:error_msg("Unexpected message: ~p~n", [Msg]),
-    {reply, {error, {bad_msg, Msg}}, State}.
+handle_call(_Msg, _From, State) ->
+    {noreply, State}.
 
 
 terminate(_Reason, _State) ->
