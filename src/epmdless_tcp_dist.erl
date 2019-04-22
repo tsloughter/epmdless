@@ -38,7 +38,8 @@
 -include_lib("kernel/include/net_address.hrl").
 -include_lib("kernel/include/dist.hrl").
 -include_lib("kernel/include/dist_util.hrl").
--include_lib("kernel/include/logger.hrl").
+
+-include("epmdless.hrl").
 
 %% ------------------------------------------------------------
 %%  Select this protocol based on node name
