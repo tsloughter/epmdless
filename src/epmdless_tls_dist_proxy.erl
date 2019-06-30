@@ -21,14 +21,14 @@
 
 
 -export([listen/2, accept/2, connect/3, get_tcp_address/1]).
--export([init/1, start_link/0, handle_call/3, handle_cast/2, handle_info/2, 
+-export([init/1, start_link/0, handle_call/3, handle_cast/2, handle_info/2,
 	 terminate/2, code_change/3]).
 
 -include_lib("kernel/include/net_address.hrl").
 
 -include("epmdless.hrl").
 
--record(state, 
+-record(state,
 	{listen,
 	 accept_loop
 	}).
@@ -146,8 +146,8 @@ handle_call({accept, _Driver, Listen}, {From, _}, State = #state{listen={_, Worl
 handle_call({connect, Driver, Ip, Port}, {From, _}, State) ->
     Me = self(),
     Pid = spawn_link(fun() -> setup_proxy(Driver, Ip, Port, Me) end),
-    receive 
-	{Pid, go_ahead, LPort} -> 
+    receive
+	{Pid, go_ahead, LPort} ->
 	    Res = {ok, Socket} = try_connect(LPort),
 	    case gen_tcp:controlling_process(Socket, From) of
 		{error, badarg} = Error -> {reply, Error, State};   % From is dead anyway.
@@ -196,7 +196,7 @@ accept_loop(Proxy, erts = Type, Listen, Extra) ->
     case gen_tcp:accept(Listen) of
 	{ok, Socket} ->
 	    Extra ! {accept,self(),Socket,inet,proxy},
-	    receive 
+	    receive
 		{_Kernel, controller, Pid} ->
 		    inet:setopts(Socket, [nodelay()]),
 		    ok = gen_tcp:controlling_process(Socket, Pid),
@@ -326,7 +326,7 @@ setup_connection(World, ErtsListen) ->
 
 
 loop_conn_setup(World, Erts) ->
-    receive 
+    receive
         {ssl, World, Data = <<$a, _/binary>>} ->
             gen_tcp:send(Erts, Data),
             ssl:setopts(World, [{packet,?PPOST}, nodelay(), {active, once}]),
@@ -377,8 +377,8 @@ loop_conn(World, Erts) ->
 
 
 get_ssl_options(Type) ->
-    application:load(epmdless_dist),
-    {ok, Config} = application:get_env(epmdless_dist, ssl_dist_opt),
+    application:load(epmdless),
+    {ok, Config} = application:get_env(epmdless, ssl_dist_opt),
     proplists:get_value(Type, Config).
 
 
