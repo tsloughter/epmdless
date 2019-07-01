@@ -58,5 +58,10 @@ EPMDLESS_REMSH_PORT=17012 erl -name local_node@127.0.0.1 -remsh epmdless_node@12
 Please also refer: https://github.com/oltarasenko/erlang_distribution_in_docker
 for an example of complete project running epmdless.
 
+### TLS example for Elixir ###
 
+Here is a small project which shows how to setup EPMDLess with TLS for Elixir:
+https://github.com/oltarasenko/epmdless-elixir-example
+
+(Please also see a discussion here: https://github.com/oltarasenko/epmdless/issues/11)
 
