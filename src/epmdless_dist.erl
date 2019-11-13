@@ -40,6 +40,5 @@ list_nodes() ->
       Node  :: atom(),
       Port  :: inet:port_number().
 set_nodes(Nodes) ->
-    _ = [remove_node(Node) || {Node, _} <- list_nodes()],
-    _ = [add_node(Node, Port) || {Node, Port} <- Nodes],
-    ok.
+    lists:foreach(fun({Node, _}) -> remove_node(Node) end, list_nodes()),
+    lists:foreach(fun({Node, Port}) -> add_node(Node, Port) end, Nodes).
