@@ -1,0 +1,5 @@
+-sname epmdless
+-setcookie epmdless_cookie
+-proto_dist epmdless_proto
+-start_epmd false
+-epmd_module epmdless_client
