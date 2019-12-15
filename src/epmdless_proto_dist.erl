@@ -52,6 +52,6 @@ childspecs() ->
 get_module() ->
     application:load(epmdless),
     case application:get_env(epmdless, transport) of
-        {ok, tls} -> epmdless_tls_dist;
-        _         -> epmdless_tcp_dist
+        {ok, tls} -> inet_tls_dist;
+        _         -> inet_tcp_dist
     end.

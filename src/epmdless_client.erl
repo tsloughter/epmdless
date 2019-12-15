@@ -7,13 +7,15 @@
 %% @end
 
 %% epmd callbacks
--export([start_link/0, register_node/3, host_please/1, port_please/2, names/1]).
+-export([start_link/0, register_node/3, port_please/2, names/1]).
 %% gen server callbacks
 -export([init/1, handle_info/2, handle_cast/2, handle_call/3, terminate/2, code_change/3]).
 %% db funcs
--export([add_node/2, add_node/3, remove_node/1, list_nodes/0]).
+-export([add_node/2, add_node/4, remove_node/1, list_nodes/0]).
 %% auxiliary funcs
 -export([get_info/0]).
+
+-include_lib("kernel/include/inet.hrl").
 
 -record(state, {
     dist_port   :: inet:port_number(),
@@ -33,19 +35,6 @@ start_link() ->
 register_node(_Name, Port, _Family) ->
     gen_server:call(?MODULE, {port, Port}, infinity),
     {ok, rand:uniform(3)}.
-
-
--spec host_please(Node) -> {host, Host} | nohost when
-      Node :: atom(),
-      Host :: inet:hostname() | inet:ip_address().
-host_please(Node) ->
-    case gen_server:call(?MODULE, {host_please, Node}, infinity) of
-        {error, nohost} ->
-            nohost;
-        {ok, Host} ->
-            {host, Host}
-    end.
-
 
 -spec port_please(Name, Host) -> {port, Port, Version} | noport when
       Name    :: atom(),
@@ -68,24 +57,24 @@ port_please(Name, Host) ->
             end
     end.
 
-
 -spec add_node(Node, Port) -> ok when
       Node :: atom(),
       Port :: inet:port_number().
 add_node(Node, Port) ->
-    Host = case string:tokens(atom_to_list(Node), "@") of
-        [_Node, H] -> H;
-        [H]        -> H
-    end,
-    add_node(Node, Host, Port).
+    case split_node(Node) of
+        {ok, {NodeName, Host, IP}} ->
+            add_node(NodeName, Host, IP, Port);
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
-
--spec add_node(Node, Host, Port) -> ok when
-      Node :: atom(),
+-spec add_node(NodeName, Host, IP, Port) -> ok when
+      NodeName :: string(),
       Host :: inet:hostname() | inet:ip_address(),
+      IP   :: inet:ip_address(),
       Port :: inet:port_number().
-add_node(Node, Host, Port) ->
-    ok = gen_server:call(?MODULE, {add_node, Node, Host, Port}, infinity).
+add_node(NodeName, Host, IP, Port) ->
+    ok = gen_server:call(?MODULE, {add_node, NodeName, Host, IP, Port}, infinity).
 
 
 -spec list_nodes() -> [{Node, Port}] when
@@ -99,8 +88,12 @@ list_nodes() ->
 -spec remove_node(Node) -> ok when
       Node :: atom().
 remove_node(Node) ->
-    ok = gen_server:call(?MODULE, {remove_node, Node}, infinity).
-
+    case split_node(Node) of
+        {ok, {NodeName, _Host, IP}} ->
+            ok = gen_server:call(?MODULE, {remove_node, NodeName, IP}, infinity);
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 %% @doc
 %% List the Erlang nodes on a certain host. We don't need that
@@ -130,30 +123,25 @@ handle_cast(_Msg, State) ->
 handle_call(list_nodes, _From, State) ->
     {reply, State#state.nodes, State};
 
-handle_call({add_node, Node, Host, Port}, _From, State) ->
-    {reply, ok, State#state{nodes = maps:put(Node, {Host, Port}, State#state.nodes)}};
+handle_call({add_node, NodeName, Host, IP, Port}, _From, State) ->
+    {reply, ok, State#state{nodes=maps:put({NodeName, IP}, {Host, Port}, State#state.nodes)}};
 
-handle_call({remove_node, Node}, _From, State) ->
-    {reply, ok, State#state{nodes = maps:remove(Node, State#state.nodes)}};
+handle_call({remove_node, NodeName, IP}, _From, State) ->
+    {reply, ok, State#state{nodes=maps:remove({NodeName, IP}, State#state.nodes)}};
 
-handle_call({host_please, Node}, _From, State) ->
-    Reply = case maps:find(Node, State#state.nodes) of
-        error -> {error, nohost};
-        {ok, {H, _P}} -> {ok, H}
-    end,
-    {reply, Reply, State};
-
-handle_call({port_please, Node, Host}, _From, State) ->
-    Reply = case maps:find(node_host_to_name(Node, Host), State#state.nodes) of
-        error -> {error, noport};
-        {ok, {_H, P}} -> {ok, P}
-    end,
+handle_call({port_please, Node, IP}, _From, State) ->
+    Reply = case maps:find({Node, IP}, State#state.nodes) of
+                error ->
+                    {error, noport};
+                {ok, {_H, P}} ->
+                    {ok, P}
+            end,
     {reply, Reply, State};
 
 handle_call({port, DistPort}, _From, State) ->
-    {reply, ok, State#state{dist_port = DistPort}};
+    {reply, ok, State#state{dist_port=DistPort}};
 
-handle_call(get_info, _From, State = #state{dist_port = DistPort}) ->
+handle_call(get_info, _From, State=#state{dist_port=DistPort}) ->
     {reply, [{dist_port, DistPort}], State};
 
 handle_call(_Msg, _From, State) ->
@@ -167,13 +155,19 @@ terminate(_Reason, _State) ->
 code_change(_Old, State, _Extra) ->
     {ok, State}.
 
+%%
 
-%% internal funcs
-
-
--spec node_host_to_name(Node, Host) -> Name when
-      Node :: atom(),
-      Host :: inet:hostname(),
-      Name :: atom().
-node_host_to_name(Node, Host) ->
-    list_to_atom(lists:flatten(io_lib:format("~s@~s", [Node, Host]))).
+%% TODO: support node's with @ using inet_db:gethostname() and inet_db:res_option(domain)
+split_node(Name) ->
+    case lists:splitwith(fun(C) -> C =/= $@ end, atom_to_list(Name)) of
+        {NodeName, [$@ | Host]} ->
+            %% TODO: support ipv6
+            case inet:getaddr(Host, inet) of
+                {ok, IP} ->
+                    {ok, {NodeName, Host, IP}};
+                {error, Reason} ->
+                    {error, Reason}
+            end;
+        _ ->
+            {error, {bad_name, Name}}
+    end.

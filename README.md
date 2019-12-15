@@ -18,16 +18,16 @@ Allows to connect erlang nodes, via Erlang distribution and without epmd, using 
 ```
 
 ### Using TLS as transport protocol ###
+
 ```
 {epmdless, [
     {transport, tls},
-    {listen_port, 17012},
-    {ssl_dist_opt, [
-        {client, [ssl:ssl_option()]},
-        {server, [ssl:ssl_option()]}
-    ]}
+    {listen_port, 17012}
 ]}
 ```
+
+And follow the instructions found in the OTP docs, [Specifying SSL/TLS Options](http://erlang.org/doc/apps/ssl/ssl_distribution.html#specifying-ssl-tls-options). 
+
 
 ### VM args ###
 Erlang VM needs few extra flags on start to disable epmd daemon startup and override empd client callback module.
