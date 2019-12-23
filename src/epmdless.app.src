@@ -2,7 +2,6 @@
  [{description, "EPMDLess application (allows connecting erlang nodes without EPMD)"},
   {vsn, "0.1.4"},
   {registered, []},
-  {mod, { epmdless_app, []}},
   {applications,
    [kernel,
     stdlib
