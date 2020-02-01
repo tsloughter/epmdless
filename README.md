@@ -35,7 +35,7 @@ Erlang VM needs few extra flags on start to disable epmd daemon startup and over
 Minimal set of options:
 `erl -proto_dist epmdless_proto -start_epmd false -epmd_module epmdless_client`
 
-Note: since epmd is disabled you need to populate epmd-client database manually. Check epmd_dist module API.
+Note: since epmd is disabled you need to populate epmd-client database manually. Check epmdless_dist module API.
 
 ### Example usage ###
 ```
