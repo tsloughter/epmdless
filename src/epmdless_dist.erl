@@ -18,8 +18,12 @@ add_node(Node, Port) ->
       Host :: inet:hostname() | inet:ip_address(),
       Port :: inet:port_number().
 add_node(Node, Host, Port) ->
-    epmdless_client:add_node(Node, Host, Port).
-
+    case inet:getaddr(Host, inet) of
+        {ok, IP} ->
+            epmdless_client:add_node(Node, Host, IP, Port);
+        {error, Reason} ->
+            {error, Reason}
+    end.
 
 -spec remove_node(Node) -> ok when
       Node :: atom().

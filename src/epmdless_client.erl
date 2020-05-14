@@ -81,13 +81,12 @@ port_please(Name, Host) ->
     end.
 
 -spec address_please(Name, Host, AddressFamily) -> Success | {error, term()} when
-	  Name :: string(),
+	  Name :: atom(),
 	  Host :: string() | inet:ip_address(),
-	  AddressFamily :: inet | inet6,
+	  AddressFamily :: inet | inet6 | local,
 	  Port :: non_neg_integer(),
 	  Version :: non_neg_integer(),
 	  Success :: {ok, inet:ip_address(), Port, Version}.
-
 %% @doc Resolves the Host to an IP address of a remote node.
 address_please(Name, Host, AddressFamily) ->
     {ok, Address} = inet:getaddr(Host, AddressFamily),
