@@ -1,10 +1,11 @@
 # Erlang (and Elixir) distribution without epmd, aka EPMDLESS #
-[![Hex pm](http://img.shields.io/hexpm/v/epmdless.svg?style=flat)](https://hex.pm/packages/epmdless) 
+
+![Shellcheck](https://github.com/tsloughter/epmdless/workflows/Shellcheck/badge.svg) [![Hex pm](http://img.shields.io/hexpm/v/epmdless.svg?style=flat)](https://hex.pm/packages/epmdless) 
 
 Allows to connect erlang nodes, via Erlang distribution and without epmd, using tcp or tls.
 
 ## Requirements ##
- Erlang >= 19.1
+ Erlang >= 21
 
 ## Configuration ##
 

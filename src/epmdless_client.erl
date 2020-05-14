@@ -7,7 +7,7 @@
 %% @end
 
 %% epmd callbacks
--export([start_link/0, register_node/3, port_please/2, names/1]).
+-export([start_link/0, register_node/3, address_please/3, port_please/2, listen_port_please/2, names/1]).
 %% gen server callbacks
 -export([init/1, handle_info/2, handle_cast/2, handle_call/3, terminate/2, code_change/3]).
 %% db funcs
@@ -22,10 +22,26 @@
     nodes = #{} :: map()
 }).
 
+-ifdef(OTP_VERSION).
+-if(?OTP_VERSION < 23).
+-define(ERL_DIST_VER, 5).  % OTP-22 or (much) older
+-else.
+-define(ERL_DIST_VER, 6).  % OTP-23 (or maybe newer?)
+-endif.
+-else.
+-define(ERL_DIST_VER, 5).  % OTP-22 or (much) older
+-endif.
 
 start_link() ->
-    gen_server:start_link({local, ?MODULE}, ?MODULE, [], []).
-
+    %% new option that allows users to not have to use epmdless_proto_dist
+    %% instead only set ERL_DIST_PORT
+    Port = case os:getenv("ERL_DIST_PORT") of
+               false ->
+                   0;
+               PortString ->
+                   list_to_integer(PortString)
+           end,
+    gen_server:start_link({local, ?MODULE}, ?MODULE, [Port], []).
 
 -spec register_node(Name, Port, Family) -> {ok, CreationId} when
       Name       :: atom(),
@@ -40,22 +56,50 @@ register_node(_Name, Port, _Family) ->
       Name    :: atom(),
       Host    :: inet:hostname(),
       Port    :: inet:port_number(),
-      Version :: 5.
+      Version :: 5 | 6.
 %% @doc
 %% request port of node `Name`
 %% @end
 port_please(Name, Host) ->
     case gen_server:call(?MODULE, {port_please, Name, Host}, infinity) of
         {ok, Port} ->
-            {port, Port, 5};
+            {port, Port, ?ERL_DIST_VER};
         {error, noport} ->
             case os:getenv("EPMDLESS_REMSH_PORT") of
                 false ->
-                    noport;
+                    %% new option that allows users to not have to use epmdless_proto_dist
+                    %% instead only set ERL_DIST_PORT
+                    case os:getenv("ERL_DIST_PORT") of
+                        false ->
+                            noport;
+                        PortString ->
+                            {port, list_to_integer(PortString), ?ERL_DIST_VER}
+                    end;
                 RemotePort ->
-                    {port, list_to_integer(RemotePort), 5}
+                    {port, list_to_integer(RemotePort), ?ERL_DIST_VER}
             end
     end.
+
+-spec address_please(Name, Host, AddressFamily) -> Success | {error, term()} when
+	  Name :: atom(),
+	  Host :: string() | inet:ip_address(),
+	  AddressFamily :: inet | inet6 | local,
+	  Port :: non_neg_integer(),
+	  Version :: non_neg_integer(),
+	  Success :: {ok, inet:ip_address(), Port, Version}.
+%% @doc Resolves the Host to an IP address of a remote node.
+address_please(Name, Host, AddressFamily) ->
+    {ok, Address} = inet:getaddr(Host, AddressFamily),
+    case port_please(Name, Host) of
+        {port, Port, Version} ->
+            {ok, Address, Port, Version};
+        noport ->
+            {error, noport}
+    end.
+
+%% @doc Returns the port the local node should listen to when accepting new distribution requests.
+listen_port_please(Name, Host) ->
+    gen_server:call(?MODULE, {listen_port, Name, Host}, infinity).
 
 -spec add_node(Node, Port) -> ok when
       Node :: atom(),
@@ -76,14 +120,12 @@ add_node(Node, Port) ->
 add_node(NodeName, Host, IP, Port) ->
     ok = gen_server:call(?MODULE, {add_node, NodeName, Host, IP, Port}, infinity).
 
-
 -spec list_nodes() -> [{Node, Port}] when
       Node :: atom(),
       Port :: inet:port_number().
 list_nodes() ->
     Nodes = gen_server:call(?MODULE, list_nodes, infinity),
     maps:to_list(Nodes).
-
 
 -spec remove_node(Node) -> ok when
       Node :: atom().
@@ -108,8 +150,8 @@ get_info() ->
     gen_server:call(?MODULE, get_info, infinity).
 
 
-init([]) ->
-    {ok, #state{}}.
+init([Port]) ->
+    {ok, #state{dist_port=Port}}.
 
 
 handle_info(_Msg, State) ->
@@ -140,6 +182,9 @@ handle_call({port_please, Node, IP}, _From, State) ->
 
 handle_call({port, DistPort}, _From, State) ->
     {reply, ok, State#state{dist_port=DistPort}};
+
+handle_call({listen_port, _Name, _Host}, _From, State=#state{dist_port=DistPort}) ->
+    {reply, {ok, DistPort}, State};
 
 handle_call(get_info, _From, State=#state{dist_port=DistPort}) ->
     {reply, [{dist_port, DistPort}], State};
