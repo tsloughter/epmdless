@@ -5,7 +5,7 @@
 %% @end
 
 
--export([listen/1, select/1, accept/1, accept_connection/5, setup/5, close/1, childspecs/0]).
+-export([listen/1, select/1, address/0, accept/1, accept_connection/5, setup/5, close/1, childspecs/0]).
 
 
 listen(Name) ->
@@ -21,6 +21,8 @@ listen(Name) ->
     application:set_env(kernel, inet_dist_listen_max, Port),
     (get_module()):listen(Name).
 
+address() ->
+    (get_module()):address().
 
 select(Node) ->
     (get_module()):select(Node).
