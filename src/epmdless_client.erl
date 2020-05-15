@@ -90,7 +90,7 @@ port_please(Name, Host) ->
 %% @doc Resolves the Host to an IP address of a remote node.
 address_please(Name, Host, AddressFamily) ->
     {ok, Address} = inet:getaddr(Host, AddressFamily),
-    case port_please(Name, Host) of
+    case port_please(Name, Address) of
         {port, Port, Version} ->
             {ok, Address, Port, Version};
         noport ->
