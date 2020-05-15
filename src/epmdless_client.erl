@@ -54,7 +54,7 @@ register_node(_Name, Port, _Family) ->
 
 -spec port_please(Name, Host) -> {port, Port, Version} | noport when
       Name    :: atom(),
-      Host    :: inet:hostname(),
+      Host    :: inet:hostname() | inet:ip_address(),
       Port    :: inet:port_number(),
       Version :: 5 | 6.
 %% @doc
