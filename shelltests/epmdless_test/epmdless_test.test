@@ -1,0 +1,20 @@
+$ rebar3 release
+> / Release successfully assembled: /
+>= 0
+
+$ ERL_DIST_PORT=9001 _build/default/rel/epmdless_test/bin/epmdless_test daemon
+>= 0
+
+$ ERL_DIST_PORT=9001 _build/default/rel/epmdless_test/bin/epmdless_test ping
+>
+pong
+>= 0
+
+# fail when a different port is set to ERL_DIST_PORT
+$ ERL_DIST_PORT=9002 _build/default/rel/epmdless_test/bin/epmdless_test ping
+>
+Node is not running!
+>= 1
+
+$ ERL_DIST_PORT=9001 _build/default/rel/epmdless_test/bin/epmdless_test stop
+>= 0

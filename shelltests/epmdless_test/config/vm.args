@@ -1,0 +1,6 @@
+-sname epmdless_test@localhost
+
+-setcookie epmdless_test
+
+-start_epmd false
+-epmd_module epmdless_client
