@@ -1,11 +1,12 @@
-# Erlang (and Elixir) distribution without epmd, aka EPMDLESS #
+# Erlang (and Elixir) distribution without EPMD, aka EPMDLESS #
 
 ![Shellcheck](https://github.com/tsloughter/epmdless/workflows/Shellcheck/badge.svg) [![Hex pm](http://img.shields.io/hexpm/v/epmdless.svg?style=flat)](https://hex.pm/packages/epmdless) 
 
 Allows to connect erlang nodes, via Erlang distribution and without epmd, using tcp or tls.
 
 ## Requirements ##
- Erlang >= 21
+
+- Erlang >= 21
 
 ## Configuration ##
 
@@ -66,3 +67,6 @@ https://github.com/oltarasenko/epmdless-elixir-example
 
 (Please also see a discussion here: https://github.com/oltarasenko/epmdless/issues/11)
 
+## Tests ##
+
+Testing is done with [shelltestrunner](https://github.com/simonmichael/shelltestrunner/) and an example project under `shelltests/epmdless_test`. From that directory run `shelltest -c --diff --all --execdir -- epmdless_test.test`. It is also run with the latest `rebar3` and `relx` in github actions for this repo.

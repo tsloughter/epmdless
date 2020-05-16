@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        otp_version: [22.3.4, "23.0"]
+        otp_version: ["23.0"]
         os: [ubuntu-latest]
 
     steps:
@@ -30,3 +30,16 @@ jobs:
 
     - name: Dialyzer
       run: rebar3 dialyzer
+
+    - uses: actions/setup-haskell@v1
+      with:
+        ghc-version: '8.6.5'
+        cabal-version: '3.0'
+
+    - name: Update cabal
+      run: cabal update
+    - name: Install shelltestrunner
+      run: cabal install shelltestrunner-1.9
+
+    - name: Run shell tests
+      run: shelltests/run_tests.sh
