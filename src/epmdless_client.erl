@@ -7,11 +7,23 @@
 %% @end
 
 %% epmd callbacks
--export([start_link/0, register_node/3, address_please/3, port_please/2, listen_port_please/2, names/1]).
-%% gen server callbacks
--export([init/1, handle_info/2, handle_cast/2, handle_call/3, terminate/2, code_change/3]).
-%% db funcs
--export([add_node/2, add_node/4, remove_node/1, list_nodes/0]).
+-export([start_link/0,
+         register_node/3,
+         address_please/3,
+         port_please/2,
+         listen_port_please/2,
+         names/1]).
+
+-export([init/1,
+         handle_call/3,
+         handle_cast/2]).
+
+%% functions for interacting with the map of nodes to ports
+-export([add_node/2,
+         add_node/4,
+         remove_node/1,
+         list_nodes/0]).
+
 %% auxiliary funcs
 -export([get_info/0]).
 
@@ -153,24 +165,12 @@ get_info() ->
 init([Port]) ->
     {ok, #state{dist_port=Port}}.
 
-
-handle_info(_Msg, State) ->
-    {noreply, State}.
-
-
-handle_cast(_Msg, State) ->
-    {noreply, State}.
-
-
 handle_call(list_nodes, _From, State) ->
     {reply, State#state.nodes, State};
-
 handle_call({add_node, NodeName, Host, IP, Port}, _From, State) ->
     {reply, ok, State#state{nodes=maps:put({NodeName, IP}, {Host, Port}, State#state.nodes)}};
-
 handle_call({remove_node, NodeName, IP}, _From, State) ->
     {reply, ok, State#state{nodes=maps:remove({NodeName, IP}, State#state.nodes)}};
-
 handle_call({port_please, Node, IP}, _From, State) ->
     Reply = case maps:find({Node, IP}, State#state.nodes) of
                 error ->
@@ -179,26 +179,17 @@ handle_call({port_please, Node, IP}, _From, State) ->
                     {ok, P}
             end,
     {reply, Reply, State};
-
 handle_call({port, DistPort}, _From, State) ->
     {reply, ok, State#state{dist_port=DistPort}};
-
 handle_call({listen_port, _Name, _Host}, _From, State=#state{dist_port=DistPort}) ->
     {reply, {ok, DistPort}, State};
-
 handle_call(get_info, _From, State=#state{dist_port=DistPort}) ->
     {reply, [{dist_port, DistPort}], State};
-
 handle_call(_Msg, _From, State) ->
     {noreply, State}.
 
-
-terminate(_Reason, _State) ->
-    ok.
-
-
-code_change(_Old, State, _Extra) ->
-    {ok, State}.
+handle_cast(_Msg, State) ->
+    {noreply, State}.
 
 %%
 
