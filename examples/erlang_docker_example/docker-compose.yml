@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+
+  node_a:
+    container_name: node_a
+    hostname: node_a
+    build: .
+
+  node_b:
+    container_name: node_b
+    hostname: node_b
+    build: .
+
+  node_c:
+    container_name: node_c
+    hostname: node_c
+    build: .

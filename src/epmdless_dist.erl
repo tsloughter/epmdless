@@ -12,7 +12,6 @@
 add_node(Node, Port) ->
     epmdless_client:add_node(Node, Port).
 
-
 -spec add_node(Node, Host, Port) -> ok when
       Node :: atom(),
       Host :: inet:hostname() | inet:ip_address(),
@@ -36,8 +35,6 @@ remove_node(Node) ->
       Port :: inet:port_number().
 list_nodes() ->
     epmdless_client:list_nodes().
-
-
 
 -spec set_nodes(Nodes) -> ok when
       Nodes :: [{Node, Port}],

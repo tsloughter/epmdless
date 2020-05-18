@@ -39,6 +39,7 @@ start_link() ->
     Port = case os:getenv("ERL_DIST_PORT") of
                false ->
                    try
+                       %% name of this argument may change
                        {ok, [[StringPort]]} = init:get_argument(erl_epmd_port),
                        list_to_integer(StringPort)
                    catch error:_ ->
