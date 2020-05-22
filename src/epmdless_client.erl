@@ -132,9 +132,10 @@ add_node(Node, Port) ->
 add_node(NodeName, Host, IP, Port) ->
     ok = gen_server:call(?MODULE, {add_node, NodeName, Host, IP, Port}, infinity).
 
--spec list_nodes() -> [{Node, Port}] when
-      Node :: atom(),
-      Port :: inet:port_number().
+-spec list_nodes() -> [{Node, {Host, Port}}] when
+      Node :: {atom(), inet:ip_address()},
+      Host :: inet:hostname() | inet:ip_address(),
+      Port :: {inet:port_number()}.
 list_nodes() ->
     Nodes = gen_server:call(?MODULE, list_nodes, infinity),
     maps:to_list(Nodes).
@@ -155,12 +156,10 @@ remove_node(Node) ->
 names(_Hostname) ->
     {error, address}.
 
-
 -spec get_info() -> Info when
       Info :: [{dist_port, inet:port_number()}].
 get_info() ->
     gen_server:call(?MODULE, get_info, infinity).
-
 
 init([Port]) ->
     {ok, #state{dist_port=Port}}.

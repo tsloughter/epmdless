@@ -66,7 +66,7 @@ address_please(Name, Host, AddressFamily) ->
     case port_please(Name, Address) of
         {port, Port, Version} ->
             {ok, Address, Port, Version};
-        noport ->
+        {error, noport} ->
             {error, noport}
     end.
 
