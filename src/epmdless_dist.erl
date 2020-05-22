@@ -12,7 +12,6 @@
 add_node(Node, Port) ->
     epmdless_client:add_node(Node, Port).
 
-
 -spec add_node(Node, Host, Port) -> ok when
       Node :: atom(),
       Host :: inet:hostname() | inet:ip_address(),
@@ -30,20 +29,18 @@ add_node(Node, Host, Port) ->
 remove_node(Node) ->
     epmdless_client:remove_node(Node).
 
-
--spec list_nodes() -> [{Node, Port}] when
-      Node :: atom(),
-      Port :: inet:port_number().
+-spec list_nodes() -> [{Node, {Host, Port}}] when
+      Node :: {atom(), inet:ip_address()},
+      Host :: inet:hostname() | inet:ip_address(),
+      Port :: {inet:port_number()}.
 list_nodes() ->
     epmdless_client:list_nodes().
-
-
 
 -spec set_nodes(Nodes) -> ok when
       Nodes :: [{Node, Port}],
       Node  :: atom(),
       Port  :: inet:port_number().
 set_nodes(Nodes) ->
-    _ = [remove_node(Node) || {Node, _} <- list_nodes()],
+    _ = [remove_node(Node) || {{Node, _}, _} <- list_nodes()],
     _ = [add_node(Node, Port) || {Node, Port} <- Nodes],
     ok.
