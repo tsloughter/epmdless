@@ -69,7 +69,7 @@ $ docker exec -ti node_c bin/epmdless_test remote_console
 
 ### Release: Variable Ports ###
 
-Below in section [[Manual Usage]] you'll find details on how to use `epmdless` without building a release, this is useful for playing around or developing on `epmdless`, in this section we will be using a release built with the latest `rebar3` nightly, OTP-23 and 
+Below in section [Manual Usage](#manual-usage) you'll find details on how to use `epmdless` without building a release, this is useful for playing around or developing on `epmdless`, in this section we will be using a release built with the latest `rebar3` nightly, OTP-23 and 
 
 The example project is under `examples/erlang_variable_ports_example`. The `rebar3` configuration shows how to include `epmdless` in your project and release:
 
