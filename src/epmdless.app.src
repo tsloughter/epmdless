@@ -1,6 +1,6 @@
 {application, epmdless,
  [{description, "EPMDLess application (allows connecting erlang nodes without EPMD)"},
-  {vsn, "0.2.0"},
+  {vsn, "0.3.0"},
   {registered, []},
   {applications,
    [kernel,
