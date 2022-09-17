@@ -101,12 +101,16 @@ port_please(Name, Host) ->
 	  Success :: {ok, inet:ip_address(), Port, Version}.
 %% @doc Resolves the Host to an IP address of a remote node.
 address_please(Name, Host, AddressFamily) ->
-    {ok, Address} = inet:getaddr(Host, AddressFamily),
-    case port_please(Name, Address) of
-        {port, Port, Version} ->
-            {ok, Address, Port, Version};
-        noport ->
-            {error, noport}
+    case inet:getaddr(Host, AddressFamily) of
+        {ok, Address} ->
+            case port_please(Name, Address) of
+                {port, Port, Version} ->
+                    {ok, Address, Port, Version};
+                noport ->
+                    {error, noport}
+            end;
+        {error, Reason} ->
+            {error, Reason}
     end.
 
 %% @doc Returns the port the local node should listen to when accepting new distribution requests.
